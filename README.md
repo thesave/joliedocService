@@ -14,6 +14,6 @@ jolie install.ol && rm install.ol
 
 # Use as a shell program
 
-jolieDocService can be used as a shell program by downloading the [jolieDoc.ol](https://github.com/thesave/joliedocService/jolieDoc.ol) file in the same folder where has been launched the install command above.
+jolieDocService can be used as a shell program by downloading the [jolieDoc.ol](https://github.com/thesave/joliedocService/blob/master/jolieDoc.ol) file in the same folder where has been launched the install command above.
 
 Usage: `jolie jolieDoc.ol`, use the option `--help` to read the program parameters and options.
