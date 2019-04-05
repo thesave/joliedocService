@@ -57,10 +57,9 @@ main
     if( is_defined( remoteFile.rh.location ) ){
       replaceFirst@StringUtils( remoteFile.rh.location { .regex = "https://(.+?)/.+", .replacement = "socket://$1:443" } )( GITHUB.location );
       replaceFirst@StringUtils( remoteFile.rh.location { .regex = "https://(.+?)/", .replacement = "" } )( remoteFile.page );
-      get@GITHUB( remoteFile )( str_dependencies ); undef( str_dependencies.rh ); resetPort
-    };
-    valueToPrettyString@StringUtils( dependencies )( s );
-    println@Console( s )()
+      get@GITHUB( remoteFile )( str_dependencies ); undef( str_dependencies.rh ); resetPort;
+      getJsonValue@JsonUtils( str_dependencies )( dependencies )
+    }
   } else {
     println@Console( "Using local dependency file" )();
     readFile@File( { .filename = depFilename, .format = "json" } )( dependencies )
