@@ -8,5 +8,6 @@ Joliedocs are similar to Javadocs: they are human-readable files (HTML, Markdown
 Install one-liner
 
 ```
-curl -sL https://github.com/thesave/joliedocService/raw/master/install.ol > install.ol && jolie install.ol && rm install.ol
+curl -sL https://github.com/thesave/joliedocService/raw/master/install.ol > install.ol &&\
+jolie install.ol && rm install.ol
 ```
