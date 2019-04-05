@@ -24,9 +24,11 @@ include "string_utils.iol"
 include "file.iol"
 include "time.iol"
 include "zip_utils.iol"
+include "json_utils.iol"
 
 constants {
-  github_address = "socket://github.com:443"
+  github_address = "socket://github.com:443",
+  repository = "thesave/joliedocService"
 }
 
 outputPort GITHUB {
@@ -46,7 +48,23 @@ define resetPort {
 
 main
 {
-  readFile@File( { .filename = "dependencies.json", .format = "json" } )( dependencies );
+  depFilename = "dependencies.json";
+  exists@File( depFilename )( existsDepfile );
+  if( !existsDepfile ){
+    println@Console( "Downloading remote dependency file from " + repository )();
+    // format = "json";
+    get@GITHUB( { .page = repository + "/raw/master/" + depFilename } )( remoteFile );
+    if( is_defined( remoteFile.rh.location ) ){
+      replaceFirst@StringUtils( remoteFile.rh.location { .regex = "https://(.+?)/.+", .replacement = "socket://$1:443" } )( GITHUB.location );
+      replaceFirst@StringUtils( remoteFile.rh.location { .regex = "https://(.+?)/", .replacement = "" } )( remoteFile.page );
+      get@GITHUB( remoteFile )( str_dependencies ); undef( str_dependencies.rh ); resetPort
+    };
+    valueToPrettyString@StringUtils( dependencies )( s );
+    println@Console( s )()
+  } else {
+    println@Console( "Using local dependency file" )();
+    readFile@File( { .filename = depFilename, .format = "json" } )( dependencies )
+  };
   download.format = "binary";
   for ( dependency in dependencies._ ) {
     download.filename = dependency.filename;
