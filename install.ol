@@ -25,8 +25,12 @@ include "file.iol"
 include "time.iol"
 include "zip_utils.iol"
 
+constants {
+  github_address = "socket://github.com:443"
+}
+
 outputPort GITHUB {
-  Location: "socket://github.com:443"
+  Location: github_address
   Protocol: https {
     .osc.get.alias = "%!{page}";
     .responseHeaders = "rh";
@@ -36,31 +40,39 @@ outputPort GITHUB {
   RequestResponse: get
 }
 
+define resetPort {
+  GITHUB.location = github_address
+}
+
 main
 {
-  download.filename = "liquidService.zip";
+  readFile@File( { .filename = "dependencies.json", .format = "json" } )( dependencies );
   download.format = "binary";
-  get@GITHUB( { .page = "thesave/joliedocService/releases/latest" } )( response );
-  with( response.rh ) {
-    if ( is_defined( .location ) ){
-      replaceFirst@StringUtils( .location { .regex = "https://github.com/", .replacement = "" } )( .location );
-      replaceFirst@StringUtils( .location { .regex = "tag", .replacement = "download" } )( .location );
-      archive.page = .location + "/" + download.filename;
-      println@Console( "Downloading " + "https://github.com/" + archive.page )();
-      get@GITHUB( archive )( response );
-      if( is_defined( .location ) ){
-        replaceFirst@StringUtils( .location { .regex = "https://(.+?)/.+", .replacement = "socket://$1:443" } )( GITHUB.location );
-        replaceFirst@StringUtils( .location { .regex = "https://(.+?)/", .replacement = "" } )( archive.page );
-        { get@GITHUB( archive )( download.content ) | startPrintDots@PrintDots() }; stopPrintDots@PrintDots();
-        writeFile@File( download )();
-        println@Console( "Unzipping " + download.filename )();
-        unzip@ZipUtils( { .filename = download.filename, .targetPath = "liquid" } )();
-        println@Console( "Deleting " + download.filename )();
-        delete@File( download.filename )()
+  for ( dependency in dependencies._ ) {
+    download.filename = dependency.filename;
+    get@GITHUB( { .page = dependency.repository + "/releases/latest" } )( response );
+    with( response.rh ) {
+      if ( is_defined( .location ) ){
+        replaceFirst@StringUtils( .location { .regex = "https://github.com/", .replacement = "" } )( .location );
+        replaceFirst@StringUtils( .location { .regex = "tag", .replacement = "download" } )( .location );
+        archive.page = .location + "/" + download.filename;
+        println@Console( "Downloading " + "https://github.com/" + archive.page )();
+        get@GITHUB( archive )( response );
+        if( is_defined( .location ) ){
+          replaceFirst@StringUtils( .location { .regex = "https://(.+?)/.+", .replacement = "socket://$1:443" } )( GITHUB.location );
+          replaceFirst@StringUtils( .location { .regex = "https://(.+?)/", .replacement = "" } )( archive.page );
+          { get@GITHUB( archive )( download.content ) | startPrintDots@PrintDots() }; stopPrintDots@PrintDots();
+          writeFile@File( download )();
+          println@Console( "Unzipping " + download.filename )();
+          unzip@ZipUtils( { .filename = download.filename, .targetPath = "." } )();
+          println@Console( "Deleting " + download.filename )();
+          delete@File( download.filename )();
+          resetPort
+        }
+      } else {
+      println@Console( "Could not find the latests version of " + download.filename + 
+        ", please download it manually from https://github.com/" + dependency.repository + "/releases/latest" )()
       }
-    } else {
-    println@Console( "Could not find latests version of " + download.filename + 
-      ", please download it manually from https://github.com/thesave/joliedocService/releases/latest" )()
     }
   }
 }
