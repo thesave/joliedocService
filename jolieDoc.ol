@@ -1,41 +1,31 @@
-/*******************************************************************************
- *   Copyright (C) 2019 by Saverio Giallorenzo <saverio.giallorenzo@gmail.com> *
- *                                                                             *
- *   This program is free software; you can redistribute it and/or modify      *
- *   it under the terms of the GNU Library General Public License as           *
- *   published by the Free Software Foundation; either version 2 of the        *
- *   License, or (at your option) any later version.                           *
- *                                                                             *
- *   This program is distributed in the hope that it will be useful,           *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
- *   GNU General Public License for more details.                              *
- *                                                                             *
- *   You should have received a copy of the GNU Library General Public         *
- *   License along with this program; if not, write to the                     *
- *   Free Software Foundation, Inc.,                                           *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.                 *
- *                                                                             *
- *   For details about the authors of this software, see the AUTHORS file.     *
- *******************************************************************************/
+/*
+ *   Copyright (C) 2019 by Saverio Giallorenzo <saverio.giallorenzo@gmail.com>
+ *                                                                            
+ *   This program is free software; you can redistribute it and/or modify     
+ *   it under the terms of the GNU Library General Public License as          
+ *   published by the Free Software Foundation; either version 2 of the       
+ *   License, or (at your option) any later version.                          
+ *                                                                            
+ *   This program is distributed in the hope that it will be useful,          
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of           
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            
+ *   GNU General Public License for more details.                             
+ *                                                                            
+ *   You should have received a copy of the GNU Library General Public        
+ *   License along with this program; if not, write to the                    
+ *   Free Software Foundation, Inc.,                                          
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.                
+ *                                                                            
+ *   For details about the authors of this software, see the AUTHORS file.    
+ */
 
 include "console.iol"
 include "string_utils.iol"
 include "json_utils.iol"
 include "file.iol"
 include "runtime.iol"
+include "inspector.iol"
 include "include/liquid.iol"
-include "include/joliedoc.iol"
-
-type HelloType: string
-type HelloWorldType: void {
-  .world: string
-}
-
-interface MyInterface {
-  OneWay: hello( HelloType ), world( HelloWorldType )
-  RequestResponse: helloWorld( HelloType )( HelloWorldType )
-}
 
 inputPort MyPort {
   Location: "socket://localhost:8000"
@@ -94,12 +84,12 @@ define printHelp
 
     getenv@Runtime( "JOLIE_HOME" )( JOLIE_HOME );
     if ( !is_defined( JOLIE_HOME ) ){ throw( IOException, "Could not find Jolie install home, JOLIE_HOME undefined." ) };
-    with( docRequest ){
-      .includes = JOLIE_HOME + sep + "include";
-      .libraries[#.libraries] = JOLIE_HOME + sep + "lib";
-      .libraries[#.libraries] = JOLIE_HOME + sep + "javaServices/*";
-      .libraries[#.libraries] = JOLIE_HOME + sep + "extensions/*"
-    };
+    // with( docRequest ){
+    //   .includes = JOLIE_HOME + sep + "include";
+    //   .libraries[#.libraries] = JOLIE_HOME + sep + "lib";
+    //   .libraries[#.libraries] = JOLIE_HOME + sep + "javaServices/*";
+    //   .libraries[#.libraries] = JOLIE_HOME + sep + "extensions/*"
+    // };
     deleteDir@File( outputFolder )();
     mkdir@File( outputFolder )();
     println@Console( "- created folder '" + outputFolder + "' to store the created documentation" )();
@@ -107,7 +97,7 @@ define printHelp
     println@Console( "- building the Jolie Documentation for file " + docRequest.file )();
     scope( a ){
       install( default => valueToPrettyString@StringUtils( a )( t ); println@Console( t )() );
-      getDocumentation@JolieDoc( docRequest )( data.result )
+      inspectProgram@Inspector( docRequest )( data.result )
     };
     if( #data.result.port > 0 ){
       println@Console( "Found " + #data.result.port + " ports" )();
